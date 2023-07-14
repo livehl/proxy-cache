@@ -50,7 +50,7 @@ class CacheSave():
 
 
 async def save_file(url, r):
-    file_name = "/data/cache/" + url.replace(".", "_").replace("https://", "").split("?")[0]
+    file_name = "data/cache/" + url.replace(".", "_").replace("https://", "").split("?")[0]
     print(file_name)
     print(file_name[:file_name.rindex("/")])
     try:
