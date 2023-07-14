@@ -16,7 +16,7 @@ cache_data = {}
 cache_head = {}
 
 # 文件缓存
-with open("file_cache", mode='r+') as f:
+with open("data/file_cache", mode='r+') as f:
     file_cache_json = f.read()
 global file_cache
 file_cache = json.loads(file_cache_json)
@@ -50,7 +50,7 @@ class CacheSave():
 
 
 async def save_file(url, r):
-    file_name = "cache/" + url.replace(".", "_").replace("https://", "").split("?")[0]
+    file_name = "/data/cache/" + url.replace(".", "_").replace("https://", "").split("?")[0]
     print(file_name)
     print(file_name[:file_name.rindex("/")])
     try:
@@ -64,7 +64,7 @@ async def save_file(url, r):
     file_cache[url.split("?")[0]] = {"url": url.split("?")[0], "header": cache_head[url], "file": file_name}
     cache_head.pop(url)
     file_cache_json = json.dumps(file_cache)
-    async with aiofiles.open("file_cache", mode='w+') as f:
+    async with aiofiles.open("data/file_cache", mode='w+') as f:
         await f.write(file_cache_json)
     await r.aclose()
 
