@@ -8,19 +8,19 @@ from fastapi import FastAPI, Request
 from fastapi.responses import StreamingResponse, Response, FileResponse
 
 proxy_servers = {
-    'http://': 'http://127.0.0.1:7890',
-    'https://': 'http://127.0.0.1:7890',
+    'http://': 'http://192.168.31.118:7890',
+    'https://': 'http://192.168.31.118:7890',
 }
-#临时缓存
+# 临时缓存
 cache_data = {}
 cache_head = {}
 
-#文件缓存
+# 文件缓存
 with open("file_cache", mode='r+') as f:
     file_cache_json = f.read()
 global file_cache
 file_cache = json.loads(file_cache_json)
-#速度测试,决定用代理，还是直连
+# 速度测试,决定用代理，还是直连
 
 app = FastAPI()
 
@@ -30,13 +30,9 @@ def read_root():
     return {"Hello": "World"}
 
 
-
-
 async def get_data(r):
     """从流获取数据，并保存到磁盘"""
     async for chunk in r.aiter_raw():
-        # print(len(chunk))
-        # print(r.url)
         if r.url not in cache_data:
             cache_data[r.url] = [chunk]
         else:
