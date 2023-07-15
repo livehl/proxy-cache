@@ -1,8 +1,10 @@
+import datetime
 import json
 import traceback
 import os
 import aiofiles
 import httpx
+import re
 
 from fastapi import FastAPI, Request
 from fastapi.responses import StreamingResponse, Response, FileResponse
@@ -53,13 +55,13 @@ async def save_file(url, r):
     file_name = "data/cache/" + url.replace(".", "_").replace("https://", "").split("?")[0]
     print(file_name)
     print(file_name[:file_name.rindex("/")])
-    header=cache_head[url]
+    header = cache_head[url]
     if "content-length" in header:
-        all_size=0
+        all_size = 0
         for i in cache_data[url]:
-            all_size+=len(i)
-        if all_size < int(header["content-length"]): #数据不够，直接抛弃
-            print("size error",all_size,header["content-length"],url)
+            all_size += len(i)
+        if all_size < int(header["content-length"]):  # 数据不够，直接抛弃
+            print("size error", all_size, header["content-length"], url)
             cache_data.pop(url)
             cache_head.pop(url)
             await r.aclose()
@@ -72,7 +74,7 @@ async def save_file(url, r):
         for i in cache_data[url]:
             await f.write(i)
     cache_data.pop(url)
-    file_cache[url.split("?")[0]] = {"url": url.split("?")[0], "header": cache_head[url], "file": file_name}
+    file_cache[url.split("?")[0]] = {"url": url.split("?")[0], "header": cache_head[url], "file": file_name,"time":str(datetime.datetime.now())}
     cache_head.pop(url)
     file_cache_json = json.dumps(file_cache)
     async with aiofiles.open("data/file_cache", mode='w+') as f:
@@ -90,11 +92,37 @@ async def http_steam(method, url, data, headers):
     if url.split("?")[0] in file_cache:
         print("use file cache:", url)
         data = file_cache[url.split("?")[0]]
-        return FileResponse(data["file"], headers=data["header"])
+        if os.path.exists(data["file"]):
+            return FileResponse(data["file"], headers=data["header"])
+        else:
+            file_cache.pop(url.split("?")[0])
     if url in cache_data:
         print("use cache:", url)
         return StreamingResponse(return_cache(url), headers=cache_head[url])
-    client = httpx.AsyncClient(proxies=proxy_servers)
+    # 用不用代理
+    async with aiofiles.open("data/direct.txt", mode='r') as f:
+        direct_hosts = await f.readlines()
+    host = url.split("//")[1].split("/")[0]
+    direct = False
+    for d in direct_hosts:
+        if d :
+            if "*" in d:
+                if d.startswith("*"):
+                    cutd=d[1:]
+                    if host[-1 * len(cutd):]==cutd:
+                        direct = True
+                else:
+                    d= d.index("*")[0]+".*"+d.index("*")[1]
+                    if re.match(d, host, flags=re.I):
+                        direct = True
+            elif  host in d :
+                direct = True
+    if direct:
+        client = httpx.AsyncClient()
+        print(host,"direct")
+    else:
+        client = httpx.AsyncClient(proxies=proxy_servers)
+        print(host, "proxy")
     req = client.build_request(method, url, headers=headers)
     r = await client.send(req, stream=True)
     r_headers = dict(r.headers)
