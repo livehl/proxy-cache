@@ -53,6 +53,17 @@ async def save_file(url, r):
     file_name = "data/cache/" + url.replace(".", "_").replace("https://", "").split("?")[0]
     print(file_name)
     print(file_name[:file_name.rindex("/")])
+    header=cache_head[url]
+    if "content-length" in header:
+        all_size=0
+        for i in cache_data[url]:
+            all_size+=len(i)
+        if all_size < int(header["content-length"]): #数据不够，直接抛弃
+            print("size error",all_size,header["content-length"],url)
+            cache_data.pop(url)
+            cache_head.pop(url)
+            await r.aclose()
+            return
     try:
         os.makedirs(file_name[:file_name.rindex("/")])
     except BaseException:
