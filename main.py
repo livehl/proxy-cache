@@ -118,12 +118,12 @@ async def http_steam(method, url, data, headers):
             elif  host in d :
                 direct = True
     if direct:
-        client = httpx.AsyncClient()
+        client = httpx.AsyncClient(timeout=None)
         print(host,"direct")
     else:
-        client = httpx.AsyncClient(proxies=proxy_servers)
+        client = httpx.AsyncClient(proxies=proxy_servers,timeout=None)
         print(host, "proxy")
-    req = client.build_request(method, url, headers=headers)
+    req = client.build_request(method, url, headers=headers,timeout=None)
     r = await client.send(req, stream=True)
     r_headers = dict(r.headers)
     print(r_headers)

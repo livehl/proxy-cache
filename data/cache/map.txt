@@ -1,0 +1,3 @@
+civitai=https://civitai.com
+huggingface=https://huggingface.co
+github=https://github.com/
