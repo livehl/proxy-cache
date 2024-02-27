@@ -1,1 +1,2 @@
 *.cn
+*hf-mirror.com
